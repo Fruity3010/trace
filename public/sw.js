@@ -1,5 +1,5 @@
 // Offline shell: static assets cache-first, pages network-first with cached fallback.
-const CACHE = 'trace-v1';
+const CACHE = 'trace-v2';
 const SHELL = ['/', '/check', '/report', '/reports', '/profile'];
 
 self.addEventListener('install', (e) => {
@@ -14,6 +14,8 @@ self.addEventListener('fetch', (e) => {
   const { request } = e;
   const url = new URL(request.url);
   if (request.method !== 'GET' || url.origin !== location.origin || url.pathname.startsWith('/api/')) return;
+  // Staff pages use HTTP Basic auth; the login prompt only appears when the browser fetches them itself.
+  if (url.pathname.startsWith('/intel')) return;
 
   if (url.pathname.startsWith('/_next/static/') || url.pathname.startsWith('/icons/')) {
     e.respondWith(caches.match(request).then((hit) => hit || fetch(request).then((res) => {
@@ -26,8 +28,10 @@ self.addEventListener('fetch', (e) => {
 
   if (request.mode === 'navigate') {
     e.respondWith(fetch(request).then((res) => {
-      const copy = res.clone();
-      caches.open(CACHE).then((c) => c.put(request, copy));
+      if (res.ok) {
+        const copy = res.clone();
+        caches.open(CACHE).then((c) => c.put(request, copy));
+      }
       return res;
     }).catch(() => caches.match(request).then((hit) => hit || caches.match('/'))));
   }
