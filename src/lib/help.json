@@ -1,0 +1,55 @@
+{
+  "_README": [
+    "Fraud-desk contacts shown to someone who has just lost money. A wrong number here",
+    "sends a victim to a fraudster, so NOTHING in this file may be guessed, remembered",
+    "or copied from a search result. Every contact needs `source` (the bank's own site)",
+    "and `verifiedOn` (the date a human opened that page and read the number).",
+    "",
+    "Entries with verifiedOn = null are treated as absent: escalate.ts falls back to",
+    "'use the number on the back of your card or inside your banking app', which is the",
+    "safest advice anyway because fake bank helplines are a common second scam.",
+    "",
+    "To fill one in: open the bank's official website, find the fraud / dispute contact,",
+    "paste it below with the page URL and today's date. See scripts/check-help.mjs."
+  ],
+  "turnaroundWorkingDays": null,
+  "_turnaroundNote": "CBN's consumer-protection resolution window for a bank complaint, in working days. Set this from the CBN framework itself, not from memory. Until it is set, TRACE tells people to escalate once their bank stops responding rather than quoting a deadline.",
+
+  "banks": {
+    "GTBank":        { "phone": null, "email": null, "whatsapp": null, "source": null, "verifiedOn": null },
+    "Access Bank":   { "phone": null, "email": null, "whatsapp": null, "source": null, "verifiedOn": null },
+    "Zenith Bank":   { "phone": null, "email": null, "whatsapp": null, "source": null, "verifiedOn": null },
+    "UBA":           { "phone": null, "email": null, "whatsapp": null, "source": null, "verifiedOn": null },
+    "First Bank":    { "phone": null, "email": null, "whatsapp": null, "source": null, "verifiedOn": null },
+    "OPay":          { "phone": null, "email": null, "whatsapp": null, "source": null, "verifiedOn": null },
+    "Kuda":          { "phone": null, "email": null, "whatsapp": null, "source": null, "verifiedOn": null },
+    "PalmPay":       { "phone": null, "email": null, "whatsapp": null, "source": null, "verifiedOn": null },
+    "Moniepoint":    { "phone": null, "email": null, "whatsapp": null, "source": null, "verifiedOn": null },
+    "Fidelity Bank": { "phone": null, "email": null, "whatsapp": null, "source": null, "verifiedOn": null },
+    "FCMB":          { "phone": null, "email": null, "whatsapp": null, "source": null, "verifiedOn": null },
+    "Sterling Bank": { "phone": null, "email": null, "whatsapp": null, "source": null, "verifiedOn": null },
+    "Stanbic IBTC":  { "phone": null, "email": null, "whatsapp": null, "source": null, "verifiedOn": null },
+    "Wema Bank":     { "phone": null, "email": null, "whatsapp": null, "source": null, "verifiedOn": null },
+    "Union Bank":    { "phone": null, "email": null, "whatsapp": null, "source": null, "verifiedOn": null },
+    "Ecobank":       { "phone": null, "email": null, "whatsapp": null, "source": null, "verifiedOn": null },
+    "Polaris Bank":  { "phone": null, "email": null, "whatsapp": null, "source": null, "verifiedOn": null }
+  },
+
+  "institutions": {
+    "cbn": {
+      "label": "CBN Consumer Protection",
+      "role": "Escalate here when your bank has not resolved your complaint. They will ask for your bank's complaint reference, so get that first.",
+      "phone": null, "email": null, "form": null, "source": null, "verifiedOn": null
+    },
+    "police": {
+      "label": "Police Cybercrime Centre",
+      "role": "For the criminal side. Report in parallel with your bank, not instead of it.",
+      "phone": null, "email": null, "form": null, "source": null, "verifiedOn": null
+    },
+    "efcc": {
+      "label": "EFCC",
+      "role": "For financial crime, especially larger amounts or an organised pattern.",
+      "phone": null, "email": null, "form": null, "source": null, "verifiedOn": null
+    }
+  }
+}
