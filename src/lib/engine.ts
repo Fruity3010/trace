@@ -234,11 +234,17 @@ export function resolveDispute(id: string, decision: 'upheld' | 'removed'): bool
 
 const count = (sql: string, ...args: string[]) => (db().prepare(sql).get(...args) as { n: number }).n;
 
-export function activity() {
+// ponytail: scores every reported account per call; cache or store scores once accounts reach the tens of thousands.
+const scoredAccounts = () => (db().prepare("SELECT DISTINCT account_number AS a FROM reports WHERE status = 'added'").all() as { a: string }[])
+  .map((x) => intelligence(x.a, null, accountRows(x.a, null)));
+
+/** Headline numbers, shown publicly on Home and in /intel. */
+export function activity(scored = scoredAccounts()) {
   return {
-    reportsToday: count("SELECT COUNT(*) AS n FROM reports WHERE status = 'added' AND created_at >= ?", since(1)),
-    flaggedByMultiple: count(`SELECT COUNT(*) AS n FROM (SELECT account_number FROM reports WHERE status = 'added' AND created_at >= ?
-      GROUP BY account_number HAVING COUNT(DISTINCT reporter) >= 2)`, since(7)),
+    accountsChecked: count('SELECT COUNT(DISTINCT account_number) AS n FROM checks'),
+    reportsReceived: count('SELECT COUNT(*) AS n FROM reports'),
+    highRisk: scored.filter((x) => x.risk === 'HIGH').length,
+    reportsThisWeek: count('SELECT COUNT(*) AS n FROM reports WHERE created_at >= ?', since(7)),
   };
 }
 
@@ -250,16 +256,11 @@ export function dashboard() {
   const cur = byCat(30, 0);
   const prev = byCat(60, 30);
 
-  // ponytail: scores every reported account per dashboard load; cache or store scores once accounts reach the tens of thousands.
-  const scored = (d.prepare("SELECT DISTINCT account_number AS a FROM reports WHERE status = 'added'").all() as { a: string }[])
-    .map((x) => intelligence(x.a, null, accountRows(x.a, null)));
+  const scored = scoredAccounts();
 
   return {
-    accountsChecked: count('SELECT COUNT(DISTINCT account_number) AS n FROM checks'),
+    ...activity(scored),
     checksTotal: count('SELECT COUNT(*) AS n FROM checks'),
-    reportsReceived: count('SELECT COUNT(*) AS n FROM reports'),
-    highRisk: scored.filter((x) => x.risk === 'HIGH').length,
-    reportsThisWeek: count('SELECT COUNT(*) AS n FROM reports WHERE created_at >= ?', since(7)),
     filtered: d.prepare("SELECT status, COUNT(*) AS n FROM reports WHERE status != 'added' GROUP BY status").all() as { status: ReportStatus; n: number }[],
     sampleReports: count('SELECT COUNT(*) AS n FROM reports WHERE sample = 1'),
     emerging: [...cur.entries()].sort((a, b) => b[1] - a[1]).slice(0, 5)

@@ -51,15 +51,18 @@ export default async function Home() {
             </Link>
           </div>
 
-          <dl className="mt-10 grid max-w-md grid-cols-2 border-t border-ink">
-            <div className="border-r border-line py-4 pr-4">
-              <dd className="tnum font-serif text-[44px] font-medium leading-none">{n(a.reportsToday)}</dd>
-              <dt className="mt-2 text-[13px] leading-snug text-ink-3">reports received today</dt>
-            </div>
-            <div className="py-4 pl-4">
-              <dd className="tnum font-serif text-[44px] font-medium leading-none">{n(a.flaggedByMultiple)}</dd>
-              <dt className="mt-2 text-[13px] leading-snug text-ink-3">accounts flagged by several people this week</dt>
-            </div>
+          <dl className="mt-10 grid grid-cols-2 border-t border-ink sm:grid-cols-4">
+            {[
+              [a.accountsChecked, 'accounts checked'],
+              [a.reportsReceived, 'reports received'],
+              [a.highRisk, 'high-risk accounts'],
+              [a.reportsThisWeek, 'reports this week'],
+            ].map(([v, l], i) => (
+              <div key={l} className={`border-line py-4 pr-4 ${i % 2 === 0 ? 'border-r' : 'pl-4'} sm:border-r sm:pl-4 sm:first:pl-0 sm:last:border-r-0`}>
+                <dd className="tnum font-serif text-[36px] font-medium leading-none lg:text-[40px]">{n(v as number)}</dd>
+                <dt className="mt-2 text-[13px] leading-snug text-ink-3">{l}</dt>
+              </div>
+            ))}
           </dl>
         </div>
 
