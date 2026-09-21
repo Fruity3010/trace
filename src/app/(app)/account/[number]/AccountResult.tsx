@@ -6,10 +6,10 @@ import { btn, HowTraceWorks, Line, page, Rule, Stamp, TopBar } from '@/component
 import { deviceId } from '@/lib/store';
 import { CATEGORIES, formatDate, Intelligence, n, Risk, Verification } from '@/lib/shared';
 
-const NEXT_STEPS: Record<Risk, string[]> = {
-  HIGH: ['Verify the recipient before sending money.', 'Avoid paying outside trusted platforms.', 'If you have already experienced an issue, report it.'],
-  MEDIUM: ['Confirm the recipient through a separate channel.', 'Prefer pay-on-delivery or a trusted platform.', 'If you have already experienced an issue, report it.'],
-  LOW: ['Still verify who you are paying.', 'Prefer trusted platforms for large payments.', 'If something goes wrong, report it here.'],
+const NEXT_STEPS: Record<Risk, string> = {
+  HIGH: "don't send money unless you can verify who you're paying in person or through a trusted platform.",
+  MEDIUM: 'confirm who you are paying through a separate channel, or use pay-on-delivery.',
+  LOW: 'still check the name matches who you are paying.',
 };
 
 export function AccountResult({ number, bank }: { number: string; bank: string | null }) {
@@ -51,7 +51,6 @@ export function AccountResult({ number, bank }: { number: string; bank: string |
 
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_280px] lg:items-start lg:gap-10">
         <article className="card px-5 py-6 sm:px-9 sm:py-9" aria-live="polite">
-          {/* Letterhead */}
           <header className="flex items-baseline justify-between gap-3 border-b-4 border-double border-ink pb-3">
             <span className="font-mono text-[13px] font-bold tracking-[0.22em]">TRACE</span>
             <span className="eyebrow text-right">Checked {checked}</span>
@@ -76,81 +75,79 @@ export function AccountResult({ number, bank }: { number: string; bank: string |
           <p className="mt-6 font-serif text-[23px] font-medium leading-snug">{data.headline}</p>
           <p className="mt-1 text-[15px] leading-relaxed text-ink-2">{data.explanation}</p>
 
-          <section className="mt-8">
-            <Rule n="01">Identity</Rule>
-            <div className="mt-3 grid gap-2">
-              <Line label="Bank">{data.bank ?? '—'}</Line>
-              <Line label="Name on account"><NameValue v={v} /></Line>
-              {data.disputed && <Line label="Status"><span className="text-brand">Disputed by account holder</span></Line>}
-            </div>
-            {v.status === 'verified' && (
-              <p className="mt-3 text-[14px] text-ink-2">Does this name match who you&apos;re paying? If not, <strong>stop</strong> — scammers often use someone else&apos;s account.</p>
-            )}
-          </section>
-
-          <section className="mt-8">
-            <Rule n="02">Record</Rule>
-            <div className="mt-3 grid gap-2">
-              <Line label="Community reports"><span className="tnum">{n(data.reports)}</span></Line>
-              <Line label="Unique reporters"><span className="tnum">{n(data.uniqueReporters)}</span></Line>
-              {data.reports > 0 && <>
-                <Line label="With evidence"><span className="tnum">{n(data.evidenceCount)}</span></Line>
-                {data.categories[0] && <Line label="Main pattern">{CATEGORIES[data.categories[0]]}</Line>}
-                <Line label="First reported">{formatDate(data.firstReported!)}</Line>
-                <Line label="Last reported">{data.lastReportedAgo}</Line>
-              </>}
-            </div>
-            {data.reports === 0 && <p className="mt-3 text-[14px] text-ink-2">Nobody has reported this account to TRACE. That is not a guarantee — scammers open new accounts often.</p>}
-          </section>
-
-          <section className="mt-8">
-            <Rule n="03">Why this result</Rule>
-            <table className="mt-2 w-full text-[14px]">
-              <tbody>
-                {data.factors.map((f, i) => (
-                  <tr key={f.key} className="border-b border-line-2">
-                    <td className="w-8 py-2.5 align-top font-mono text-[12px] text-ink-4">{String(i + 1).padStart(2, '0')}</td>
-                    <td className="py-2.5 pr-3">
-                      <span className="block font-medium">{f.label}</span>
-                      <span className="text-ink-3">{f.detail}</span>
-                    </td>
-                    <td className="tnum whitespace-nowrap py-2.5 text-right align-top font-mono">+{Math.round(f.points)}<span className="text-ink-4">/{f.max}</span></td>
-                  </tr>
-                ))}
-                <tr className="border-t-2 border-ink">
-                  <td />
-                  <td className="py-3 font-semibold">Risk score</td>
-                  <td className="tnum py-3 text-right font-mono text-[16px] font-bold">{data.score}<span className="text-ink-4">/100</span></td>
-                </tr>
-              </tbody>
-            </table>
-            <p className="mt-1 text-[13px] text-ink-3">0–29 low · 30–69 medium · 70–100 high. Calculated by fixed rules, not AI. One reporter alone cannot raise an account above low.</p>
-          </section>
-
-          {data.reports > 0 && (
-            <section className="mt-8">
-              <Rule n="04">Common patterns</Rule>
-              <ul className="mt-3 grid gap-3">
-                {data.patterns.map((p) => (
-                  <li key={p.label}>
-                    <Line label={p.label}><span className="tnum">{p.count}</span></Line>
-                    <div className="mt-1 h-[3px] bg-line-2" aria-hidden><div className="h-full bg-ink" style={{ width: `${(p.count / data.reports) * 100}%` }} /></div>
-                  </li>
-                ))}
-              </ul>
-            </section>
+          <div className="mt-6 grid gap-2">
+            <Line label="Name on account"><NameValue v={v} /></Line>
+            {data.disputed && <Line label="Status"><span className="text-brand">Disputed by account holder</span></Line>}
+          </div>
+          {v.status === 'verified' && (
+            <p className="mt-2 text-[14px] text-ink-2">Not who you&apos;re paying? <strong>Stop</strong> — scammers often use someone else&apos;s account.</p>
           )}
 
-          <section className="mt-8">
-            <Rule n={data.reports > 0 ? '05' : '04'}>What to do</Rule>
-            <ol className="mt-3 grid gap-2.5">
-              {NEXT_STEPS[data.risk].map((s, i) => (
-                <li key={s} className="flex gap-3 text-[15px]">
-                  <span className="font-serif text-[18px] italic leading-6 text-ink-3">{i + 1}.</span>{s}
-                </li>
-              ))}
-            </ol>
-          </section>
+          <p className="mt-6 text-[15px]"><strong>What to do:</strong> {NEXT_STEPS[data.risk]}</p>
+
+          <div className="mt-6 grid gap-2 sm:grid-cols-2">
+            <Link href={reportHref} className={btn.primary}>Report this account</Link>
+            <Link href="/check" className={btn.secondary}>Check another</Link>
+          </div>
+
+          <details className="group mt-8 border-t border-line pt-4">
+            <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between font-semibold">
+              Why this result <Icon name="chevronDown" size={18} className="transition group-open:rotate-180" />
+            </summary>
+
+            <section className="mt-4">
+              <Rule n="01">Record</Rule>
+              <div className="mt-3 grid gap-2">
+                <Line label="Community reports"><span className="tnum">{n(data.reports)}</span></Line>
+                <Line label="Unique reporters"><span className="tnum">{n(data.uniqueReporters)}</span></Line>
+                {data.reports > 0 && <>
+                  <Line label="With evidence"><span className="tnum">{n(data.evidenceCount)}</span></Line>
+                  {data.categories[0] && <Line label="Main pattern">{CATEGORIES[data.categories[0]]}</Line>}
+                  <Line label="First reported">{formatDate(data.firstReported!)}</Line>
+                  <Line label="Last reported">{data.lastReportedAgo}</Line>
+                </>}
+              </div>
+              {data.reports === 0 && <p className="mt-3 text-[14px] text-ink-2">Nobody has reported this account to TRACE. That is not a guarantee — scammers open new accounts often.</p>}
+            </section>
+
+            <section className="mt-8">
+              <Rule n="02">Score</Rule>
+              <table className="mt-2 w-full text-[14px]">
+                <tbody>
+                  {data.factors.map((f, i) => (
+                    <tr key={f.key} className="border-b border-line-2">
+                      <td className="w-8 py-2.5 align-top font-mono text-[12px] text-ink-4">{String(i + 1).padStart(2, '0')}</td>
+                      <td className="py-2.5 pr-3">
+                        <span className="block font-medium">{f.label}</span>
+                        <span className="text-ink-3">{f.detail}</span>
+                      </td>
+                      <td className="tnum whitespace-nowrap py-2.5 text-right align-top font-mono">+{Math.round(f.points)}<span className="text-ink-4">/{f.max}</span></td>
+                    </tr>
+                  ))}
+                  <tr className="border-t-2 border-ink">
+                    <td />
+                    <td className="py-3 font-semibold">Risk score</td>
+                    <td className="tnum py-3 text-right font-mono text-[16px] font-bold">{data.score}<span className="text-ink-4">/100</span></td>
+                  </tr>
+                </tbody>
+              </table>
+              <p className="mt-1 text-[13px] text-ink-3">0–29 low · 30–69 medium · 70–100 high. Calculated by fixed rules, not AI. One reporter alone cannot raise an account above low.</p>
+            </section>
+
+            {data.reports > 0 && (
+              <section className="mt-8">
+                <Rule n="03">Common patterns</Rule>
+                <ul className="mt-3 grid gap-3">
+                  {data.patterns.map((p) => (
+                    <li key={p.label}>
+                      <Line label={p.label}><span className="tnum">{p.count}</span></Line>
+                      <div className="mt-1 h-[3px] bg-line-2" aria-hidden><div className="h-full bg-ink" style={{ width: `${(p.count / data.reports) * 100}%` }} /></div>
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            )}
+          </details>
 
           <footer className="mt-10 border-t border-ink pt-3 text-[12px] leading-relaxed text-ink-3">
             {data.disclaimer} Reporter identities are never disclosed.{data.sampleData && ' Includes sample data.'}
@@ -158,8 +155,6 @@ export function AccountResult({ number, bank }: { number: string; bank: string |
         </article>
 
         <aside className="grid gap-3 lg:sticky lg:top-6">
-          <Link href={reportHref} className={btn.primary}>Report this account</Link>
-          <Link href="/check" className={btn.secondary}>Check another account</Link>
           {data.reports > 0 && (
             <button type="button" onClick={() => setDisputeOpen(true)} className="min-h-11 text-left text-[14px] text-ink-2">
               Is this your account? <span className="text-brand underline decoration-1 underline-offset-4">Dispute these reports</span>

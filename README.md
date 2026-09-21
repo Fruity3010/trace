@@ -112,9 +112,10 @@ The idea and the product decisions are ours; TRACE was *built* with **Claude Cod
   (`npm run check`) that exercises scoring, trust rules, disputes, API auth, WhatsApp
   signature rejection and multilingual classification on a throwaway database.
 - **Humans steered, AI executed.** We rejected the AI's first visual design as "too AI
-  generic" and chose a credit-report look instead; questioned whether reports should
-  need human review (they don't — the trust rules do the job); and pushed for WhatsApp
-  voice notes, local languages and the "first hour" recovery flow.
+  generic" and supplied our own mockup for the final look; questioned whether reports
+  should need human review (they don't — the trust rules do the job); cut the check,
+  report and help flows down to the fewest possible steps for people under stress; and
+  pushed for WhatsApp voice notes, local languages and the "first hour" recovery flow.
 - **Guardrails written down for the AI.** The rules above ("AI never scores", "sample
   data never gets a real name", "nobody is called a scammer") were recorded as
   project rules, so every later change by the coding agent had to respect them.

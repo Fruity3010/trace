@@ -7,8 +7,8 @@ export default function manifest(): MetadataRoute.Manifest {
     description: 'Check a bank account before you send money.',
     start_url: '/',
     display: 'standalone',
-    background_color: '#0a1322',
-    theme_color: '#0a1322',
+    background_color: '#07120d',
+    theme_color: '#07120d',
     icons: [
       { src: '/icons/192', sizes: '192x192', type: 'image/png' },
       { src: '/icons/512', sizes: '512x512', type: 'image/png' },

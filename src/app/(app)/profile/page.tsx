@@ -10,7 +10,6 @@ type InstallEvent = Event & { prompt: () => Promise<void> };
 
 const BUSINESS: { href: string; icon: IconName; title: string; sub: string }[] = [
   { href: '/developers', icon: 'code', title: 'TRACE API', sub: 'Warn customers before they pay' },
-  { href: '/intel', icon: 'chart', title: 'Intelligence dashboard', sub: 'Staff only' },
 ];
 
 export default function ProfilePage() {
@@ -37,11 +36,6 @@ export default function ProfilePage() {
       <div className="mt-6 grid gap-6 lg:grid-cols-2">
         <div className="grid content-start gap-3">
           <section className="overflow-hidden card">
-            <label className="flex min-h-16 items-center gap-3 border-b border-line-2 px-4">
-              <Icon name="lock" className="text-ink-3" />
-              <span className="flex-1"><span className="block font-semibold">Report anonymously by default</span><span className="text-[13px] text-ink-3">Your name is never shown publicly</span></span>
-              <input type="checkbox" role="switch" checked={prefs.anonymous} onChange={(e) => setPrefs((p) => ({ ...p, anonymous: e.target.checked }))} className="size-6 accent-brand" />
-            </label>
             <label className="flex min-h-16 items-center gap-3 px-4">
               <Icon name="globe" className="text-ink-3" />
               <span className="flex-1"><span className="block font-semibold">Voice input language</span><span className="text-[13px] text-ink-3">Typed reports work in any language</span></span>
@@ -65,6 +59,12 @@ export default function ProfilePage() {
               <Icon name="chevronRight" className="text-ink-4" />
             </a>
           )}
+
+          <Link href="/reports" className="flex min-h-16 items-center gap-3 card px-4 lg:hidden">
+            <Icon name="file" className="text-ink-3" />
+            <span className="flex-1"><span className="block font-semibold">My reports</span><span className="text-[13px] text-ink-3">Track what you have reported</span></span>
+            <Icon name="chevronRight" className="text-ink-4" />
+          </Link>
 
           <h2 className="eyebrow mt-4 lg:hidden">For business</h2>
           <ul className="overflow-hidden card lg:hidden">

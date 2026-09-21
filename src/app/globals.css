@@ -1,50 +1,67 @@
 @import "tailwindcss";
 
 /*
- * TRACE visual language: an intelligence dossier.
- * Night-navy file, white type, hairline rules, condensed headlines, monospace
- * case figures, a stamped verdict. No gradients, glow, blur or drop shadows.
- * Colour is reserved for risk. Token names are historical: `paper` is the page
- * (dark), `ink` is the type (light), `raised` is a file card.
+ * TRACE visual language: night-green with a signal-green accent.
+ * Bold geometric headlines, rounded cards, a handwritten aside or two.
+ * Risk colours stay reserved for risk and always come with an icon + text.
+ * Token names are historical: `paper` is the page (dark), `ink` is the type (light),
+ * `raised` is a card, `brand` is the green used for primary actions.
  */
 @theme {
-  --color-ink: #e9eef6;
-  --color-ink-2: #b3bfd1;
-  --color-ink-3: #8391a8;
-  --color-ink-4: #58677f;
+  --color-ink: #eef5f0;
+  --color-ink-2: #b4c4ba;
+  --color-ink-3: #82958a;
+  --color-ink-4: #56675d;
 
-  --color-paper: #0a1322;
-  --color-raised: #101c30;
-  --color-line: #253650;
-  --color-line-2: #1a283e;
+  --color-paper: #07120d;
+  --color-raised: #0e1c16;
+  --color-line: #20352b;
+  --color-line-2: #16271f;
   /* The vault: a block set deeper than the page (code, internal panels). */
-  --color-vault: #050b16;
+  --color-vault: #030a07;
 
-  /* Accent: signal blue, for links and focus only. */
-  --color-brand: #7fb0ff;
-  --color-brand-ink: #a9c8ff;
-  --color-brand-wash: #15284a;
+  /* Accent: signal green, for primary actions, links and focus. */
+  --color-brand: #4ade80;
+  --color-brand-ink: #86efac;
+  --color-brand-wash: #10301f;
 
-  /* Risk — reserved, never decoration. Always paired with icon + text. High is notice red. */
+  /* Risk — reserved, never decoration. Always paired with icon + text. */
   --color-high: #ff6457;
   --color-high-wash: #3b1519;
   --color-medium: #f2b24a;
   --color-medium-wash: #382a12;
-  --color-low: #54cf8d;
+  --color-low: #4ade80;
   --color-low-wash: #0f2e20;
 
-  --font-serif: var(--font-serif), "Arial Narrow", system-ui, sans-serif;
+  --font-serif: var(--font-serif), system-ui, sans-serif;
   --font-sans: var(--font-sans), system-ui, sans-serif;
   --font-mono: var(--font-mono), ui-monospace, monospace;
+  --font-hand: var(--font-hand), cursive;
 
-  /* Documents have corners. */
-  --radius-md: 3px;
-  --radius-lg: 4px;
-  --radius-xl: 4px;
-  --radius-2xl: 5px;
-  --radius-3xl: 6px;
+  --radius-md: 10px;
+  --radius-lg: 12px;
+  --radius-xl: 14px;
+  --radius-2xl: 16px;
+  --radius-3xl: 22px;
 
   --ease-out-soft: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* A light band inside the dark page: same tokens, flipped. */
+.theme-light {
+  --color-ink: #0b1a13;
+  --color-ink-2: #3b4d43;
+  --color-ink-3: #5f7268;
+  --color-ink-4: #93a39a;
+  --color-paper: #f3f7f4;
+  --color-raised: #ffffff;
+  --color-line: #dbe5df;
+  --color-line-2: #e8efea;
+  --color-brand: #16a34a;
+  --color-brand-wash: #e3f6ea;
+  --color-low: #15803d;
+  background: var(--color-paper);
+  color: var(--color-ink);
 }
 
 :root { color-scheme: dark; }
@@ -59,12 +76,12 @@ body {
 
 /* A file card on the desk: hairline edge, no shadow. */
 @utility card {
-  border-radius: 6px;
+  border-radius: 16px;
   background: var(--color-raised);
   border: 1px solid var(--color-line);
 }
 @utility card-sm {
-  border-radius: 4px;
+  border-radius: 10px;
   background: var(--color-raised);
   border: 1px solid var(--color-line);
 }
@@ -72,9 +89,10 @@ body {
 @utility surface-hero {
   background: var(--color-ink);
 }
-/* Primary action: solid ink. */
+/* Primary action: signal green. */
 @utility btn-glow {
-  background: var(--color-ink);
+  background: var(--color-brand);
+  color: var(--color-vault);
 }
 @utility glass {
   background: var(--color-raised);
@@ -130,7 +148,7 @@ body {
   outline-offset: 2px;
 }
 
-::selection { background: #2b4a80; }
+::selection { background: #1f5b37; }
 
 @utility tnum { font-variant-numeric: tabular-nums; }
 
