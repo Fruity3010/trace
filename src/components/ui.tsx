@@ -36,8 +36,8 @@ export function Stamp({ risk, score }: { risk: Risk; score: number }) {
 export function Brand({ small }: { small?: boolean }) {
   return (
     <span className="inline-flex items-baseline gap-2" aria-label="TRACE">
-      <span className={`font-mono font-bold tracking-[0.22em] ${small ? 'text-[15px]' : 'text-[17px]'}`}>TRACE</span>
-      <span className="font-serif text-[13px] italic text-ink-3">check before you trust</span>
+      <span className={`font-serif font-extrabold tracking-[0.08em] ${small ? 'text-[18px]' : 'text-[22px]'}`}>TR<span className="text-brand">Λ</span>CE</span>
+      <span className="text-[12px] text-ink-3">Check before you trust.</span>
     </span>
   );
 }
@@ -87,8 +87,8 @@ export function Line({ label, children, className = '' }: { label: ReactNode; ch
 }
 
 export const btn = {
-  primary: 'inline-flex min-h-13 w-full items-center justify-center gap-2 rounded-md bg-ink px-5 text-[15px] font-semibold tracking-wide text-raised transition hover:bg-ink-2 active:translate-y-px disabled:bg-ink-4 disabled:text-raised/80',
-  brand: 'inline-flex min-h-13 w-full items-center justify-center gap-2 rounded-md bg-ink px-5 text-[15px] font-semibold text-raised transition hover:bg-ink-2 disabled:opacity-40',
+  primary: 'inline-flex min-h-13 w-full items-center justify-center gap-2 rounded-md bg-brand px-5 text-[15px] font-bold text-vault transition hover:bg-brand-ink active:translate-y-px disabled:bg-ink-4 disabled:text-raised/80',
+  brand: 'inline-flex min-h-13 w-full items-center justify-center gap-2 rounded-md bg-brand px-5 text-[15px] font-bold text-vault transition hover:bg-brand-ink disabled:opacity-40',
   secondary: 'inline-flex min-h-13 w-full items-center justify-center gap-2 rounded-md border border-ink bg-transparent px-5 text-[15px] font-semibold text-ink transition hover:bg-ink/5 active:translate-y-px',
   danger: 'inline-flex min-h-13 w-full items-center justify-center gap-2 rounded-md bg-high px-5 text-[15px] font-semibold text-paper transition',
 };

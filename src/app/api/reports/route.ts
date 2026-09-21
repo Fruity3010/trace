@@ -4,7 +4,7 @@ import path from 'node:path';
 import { NextResponse } from 'next/server';
 import { verifyClassification } from '@/lib/ai';
 import { DATA_DIR } from '@/lib/db';
-import { addEvidence, reporterKey, reportsFor, submitReport } from '@/lib/engine';
+import { addEvidence, peekAccount, reporterKey, reportsFor, submitReport } from '@/lib/engine';
 import { resolveAccount } from '@/lib/paystack';
 import { Classification, findBank, normalizeAccount } from '@/lib/shared';
 
@@ -56,7 +56,8 @@ export async function POST(req: Request) {
   const bank = findBank(form.get('bank'));
   if (!bank) return NextResponse.json({ error: 'Choose the bank you paid' }, { status: 400 });
   // A number that doesn't exist at that bank is almost always a typo; don't let it become a report.
-  if ((await resolveAccount(accountNumber, bank, reporter)).status === 'not_found') {
+  // Sample accounts are made up, so the bank won't know them.
+  if (!peekAccount(bank, accountNumber).sampleData && (await resolveAccount(accountNumber, bank, reporter)).status === 'not_found') {
     return NextResponse.json({ error: `${accountNumber} doesn't match an account at ${bank}. Check the number and bank.` }, { status: 400 });
   }
 

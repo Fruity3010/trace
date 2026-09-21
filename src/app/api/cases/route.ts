@@ -3,10 +3,10 @@
 // Cases belong to the hashed device id, like reports, so only the person who opened
 // a case can see it.
 import { NextResponse } from 'next/server';
-import { rateLimit } from '@/lib/db';
+import { db, rateLimit } from '@/lib/db';
 import { deviceKey as device } from '@/lib/caller';
 import { caseView, latestCase, openCase } from '@/lib/escalate';
-import { findBank, normalizeAccount } from '@/lib/shared';
+import { DAY, findBank, normalizeAccount } from '@/lib/shared';
 
 export async function GET(req: Request) {
   const reporter = device(req);
@@ -34,6 +34,8 @@ export async function POST(req: Request) {
   if (amount !== null && !(amount > 0 && amount < 1e11)) return NextResponse.json({ error: 'Enter the amount in naira, or leave it blank' }, { status: 400 });
 
   if (!rateLimit('case', reporter, 5)) return NextResponse.json({ error: 'Too many cases this hour. Please try again later.' }, { status: 429 });
-  const c = openCase({ accountNumber, bank, victimBank, amount, sentAt: new Date(sent).toISOString(), reporter });
+  const prior = db().prepare("SELECT id FROM reports WHERE reporter = ? AND account_number = ? AND status = 'added' AND created_at >= ? ORDER BY created_at DESC LIMIT 1")
+    .get(reporter, accountNumber, new Date(Date.now() - 30 * DAY).toISOString()) as { id: string } | undefined;
+  const c = openCase({ accountNumber, bank, victimBank, amount, sentAt: new Date(sent).toISOString(), reporter, reportId: prior?.id });
   return NextResponse.json(caseView(c));
 }

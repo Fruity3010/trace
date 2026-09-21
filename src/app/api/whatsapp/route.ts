@@ -7,7 +7,7 @@ import { createHmac, timingSafeEqual } from 'node:crypto';
 import { AUDIO_TYPES, classifyReport, extractAccounts, IMAGE_TYPES, Language, LANGUAGES, localize, transcribeAudio } from '@/lib/ai';
 import { after } from 'next/server';
 import { asDemo, db, inDemo, rateLimit, resetDemo } from '@/lib/db';
-import { checkAccount, reporterKey, submitReport } from '@/lib/engine';
+import { checkAccount, peekAccount, reporterKey, submitReport } from '@/lib/engine';
 import {
   attachReference, callScript, CARD_ADVICE, CaseFacts, cbnEscalation, demoFastForward, getCase, helpFor, institution,
   latestCase, markFiled, NEVER, nextStep, openCase, REFERENCE_NUDGE, urgency, writtenComplaint,
@@ -146,7 +146,7 @@ function parseBank(text: string): Bank | null {
  * words (English, Pidgin, and common Yoruba/Hausa/Igbo terms), diacritics stripped.
  * Only used where no other answer is expected, so it can't swallow a story mid-flow.
  */
-const SCAM_WORDS = /\b(scam\w*|fraud\w*|defraud\w*|dup(e|ed|ing)|419|swindl\w*|con ?man|conned|stole|stolen|robbed|chop(ped)? my money|took my money|lost (my )?money|sent (the |my )?money|paid .* (blocked|disappeared)|blocked me|yahoo ?boy|wayo|jibiti|damfara|aghugho)\b/;
+const SCAM_WORDS = /\b(scam\w*|fraud\w*|defraud\w*|dup(e|ed|ing)|419|swindl\w*|con ?man|conned|stole|stolen|robbed|chop(ped)? my money|took my money|lost (my )?money|sent (the |my )?money|(don|done) send (the |my )?money|paid .* (blocked|disappeared)|block(ed)? me|yahoo ?boy|wayo|jibiti|damfara|aghugho)\b/;
 function soundsScammed(text: string): boolean {
   return SCAM_WORDS.test(text.normalize('NFD').replace(/\p{M}/gu, '').toLowerCase());
 }
@@ -280,7 +280,7 @@ async function check(number: string, bank: Bank, phone: string): Promise<[string
 }
 
 async function confirmReport(number: string, bank: Bank, story: string, hasMedia: boolean, phone: string): Promise<[string, State]> {
-  if ((await resolveAccount(number, bank, phone)).status === 'not_found') {
+  if (!peekAccount(bank, number).sampleData && (await resolveAccount(number, bank, phone)).status === 'not_found') {
     return [`⛔ ${number} doesn't match an account at ${bank}. Please check the number and send it again.`, { step: 'report_number' }];
   }
   const c = await classifyReport(story);

@@ -141,6 +141,10 @@ v = case(f"/api/cases/{v['id']}", {'action': 'reference', 'reference': 'WEB/2026
 check('web reference saved', (v['reference'], v['next']['step']), ('WEB/2026/9', 'wait'))
 check('web latest case is returned', case('/api/cases')[1]['id'], v['id'])
 check('web rejects a future send date', case('/api/cases', {'sentAt': '2099-01-01T00:00:00Z', 'accountNumber': acct, 'bank': 'GTBank', 'victimBank': 'Kuda'})[0], 400)
+# Report first, then ask for help: the case picks up that report, so nobody reports twice.
+s, v = case('/api/cases', {'sentAt': (datetime.datetime.utcnow() - datetime.timedelta(minutes=5)).isoformat() + 'Z',
+                            'accountNumber': acct, 'bank': 'GTBank', 'victimBank': 'Kuda'}, who={'x-trace-device': d1})
+check('case after reporting links the report', (s, v['reportFiled']), (200, True))
 
 sys.exit(fail)
 PY

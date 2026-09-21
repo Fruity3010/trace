@@ -9,7 +9,7 @@ import { BankOptions } from '@/components/BankOptions';
 import { Icon } from '@/components/Icons';
 import { btn, Line, page, Rule, TopBar } from '@/components/ui';
 import type { CaseView } from '@/lib/escalate';
-import { formatDate, n } from '@/lib/shared';
+import { findBank, formatDate, n } from '@/lib/shared';
 import { deviceId } from '@/lib/store';
 
 const field = 'card-sm h-13 w-full min-w-0 px-3 text-[15px] outline-none focus:ring-4 focus:ring-brand/15';
@@ -30,27 +30,33 @@ async function api(path: string, body?: object): Promise<CaseView | null> {
   return data;
 }
 
-export function HelpFlow() {
+type Initial = { initialAccount: string; initialBank: string };
+
+export function HelpFlow({ initialAccount, initialBank }: Initial) {
   const [view, setView] = useState<CaseView | null>(null);
   const [loading, setLoading] = useState(true);
   const [fresh, setFresh] = useState(false);
+  // Arriving with an account (e.g. straight after reporting it) starts a case for that account; only until one is opened.
+  const [fromLink, setFromLink] = useState(!!initialAccount);
 
   useEffect(() => {
     api('/api/cases').then(setView).catch(() => setView(null)).finally(() => setLoading(false));
   }, []);
 
   if (loading) return <div className={page.mid}><TopBar title="Get help" /><p className="mt-10 text-ink-3">Loading…</p></div>;
-  if (view && !fresh && view.status !== 'resolved') return <CaseScreen view={view} setView={setView} onNew={() => setFresh(true)} />;
-  return <Intake onOpen={(v) => { setView(v); setFresh(false); }} />;
+  const forOther = fromLink && view?.accountNumber !== initialAccount;
+  if (view && !fresh && !forOther && view.status !== 'resolved') return <CaseScreen view={view} setView={setView} onNew={() => setFresh(true)} />;
+  return <Intake initialAccount={fromLink ? initialAccount : ''} initialBank={fromLink ? initialBank : ''}
+    onOpen={(v) => { setView(v); setFresh(false); setFromLink(false); window.history.replaceState(null, '', '/help'); }} />;
 }
 
 /* ───────────── Intake ───────────── */
 
-function Intake({ onOpen }: { onOpen: (v: CaseView) => void }) {
+function Intake({ onOpen, initialAccount, initialBank }: Initial & { onOpen: (v: CaseView) => void }) {
   const [when, setWhen] = useState<(typeof WHEN)[number]['key'] | ''>('');
   const [date, setDate] = useState('');
-  const [account, setAccount] = useState('');
-  const [bank, setBank] = useState('');
+  const [account, setAccount] = useState(initialAccount.replace(/\D/g, '').slice(0, 10));
+  const [bank, setBank] = useState(findBank(initialBank) ?? '');
   const [amount, setAmount] = useState('');
   const [victimBank, setVictimBank] = useState('');
   const [error, setError] = useState('');
@@ -78,7 +84,7 @@ function Intake({ onOpen }: { onOpen: (v: CaseView) => void }) {
     <div className={`${page.mid} animate-rise`}>
       <TopBar title="Get help" />
       <h1 className="font-serif text-[34px] font-semibold leading-tight lg:text-[44px]">Sent money and something is wrong?</h1>
-      <p className="mt-2 max-w-lg text-[16px] text-ink-2">Move fast. Only <em>your</em> bank can ask for the money to be frozen, and the first hours matter most. Three questions, then we tell you exactly what to say.</p>
+      <p className="mt-2 max-w-lg text-[16px] text-ink-2">Only <em>your</em> bank can freeze the money, and the first hours matter. Answer three quick questions and we&apos;ll tell you exactly what to say.</p>
 
       <form onSubmit={submit} className="mt-8 grid gap-7">
         <fieldset>
@@ -126,6 +132,7 @@ function Intake({ onOpen }: { onOpen: (v: CaseView) => void }) {
         </button>
         <p className="-mt-3 text-center text-[13px] text-ink-3">Prefer WhatsApp? Send <strong className="font-mono">HELP ME</strong> to TRACE.</p>
       </form>
+
     </div>
   );
 }
@@ -141,40 +148,38 @@ function CaseScreen({ view: v, setView, onNew }: { view: CaseView; setView: (v: 
   };
   const called = v.status !== 'open';
   const later = v.next.step === 'wait' || v.next.step === 'escalate';
+  const crimeStep = later ? '05' : '04';
 
   return (
     <div className={`${page.mid} animate-rise`}>
       <TopBar title={`Case ${v.id}`} right={<button type="button" onClick={onNew} className="text-[13px] font-semibold text-brand underline underline-offset-4">New case</button>} />
 
-      <section className="card p-5">
-        <div className="flex flex-wrap items-baseline justify-between gap-2">
-          <p className="font-mono text-[26px] font-bold tracking-wider">{v.accountNumber}</p>
-          <span className="eyebrow">{v.status}</span>
-        </div>
-        <div className="mt-3 grid gap-1">
-          <Line label="Their bank">{v.bank ?? '—'}</Line>
-          <Line label="Sent">{v.amount ? `₦${n(v.amount)}` : 'Amount not given'} · {formatDate(v.sentAt)}</Line>
-          <Line label="From">{v.victimBank ?? '—'}</Line>
-          {v.priorReporters > 0 && <Line label="Already reported by"><span className="text-high">{n(v.priorReporters)} {v.priorReporters === 1 ? 'person' : 'people'}</span></Line>}
-        </div>
-      </section>
 
       {error && <p role="alert" className="mt-4 text-[14px] font-semibold text-high">{error}</p>}
 
       <Step n="01" title="Call your bank" done={called}>
-        <p className="font-serif text-[22px] font-semibold leading-snug">{v.urgency.headline}</p>
-        <p className="mt-1 text-ink-2">{v.urgency.detail}</p>
-        {v.desk?.phone ? (
-          <a href={`tel:${v.desk.phone.replace(/[^\d+]/g, '')}`} className={`${btn.primary} mt-4`}>
-            <Icon name="phone" size={18} /> Call {v.victimBank}: {v.desk.phone}
-          </a>
+        {called ? (
+          <details>
+            <summary className="min-h-11 cursor-pointer text-[14px] text-ink-3 underline underline-offset-4">Show the call script again</summary>
+            <Letter text={v.script.join('\n')} italic />
+          </details>
         ) : (
-          <p className="mt-4 flex gap-3 rounded-md border border-line p-4 text-[14px] text-ink-2"><Icon name="phone" className="shrink-0 text-ink" />{v.cardAdvice}</p>
+          <>
+            <p className="font-serif text-[22px] font-semibold leading-snug">{v.urgency.headline}</p>
+            <p className="mt-1 text-ink-2">{v.urgency.detail}</p>
+            {v.desk?.phone ? (
+              <a href={`tel:${v.desk.phone.replace(/[^\d+]/g, '')}`} className={`${btn.primary} mt-4`}>
+                <Icon name="phone" size={18} /> Call {v.victimBank}: {v.desk.phone}
+              </a>
+            ) : (
+              <p className="mt-4 flex gap-3 rounded-md border border-line p-4 text-[14px] text-ink-2"><Icon name="phone" className="shrink-0 text-ink" />{v.cardAdvice}</p>
+            )}
+            <p className="eyebrow mt-5">Say exactly this</p>
+            <Letter text={v.script.join('\n')} italic />
+            <p className="mt-3 flex gap-2 text-[14px] font-semibold text-medium"><Icon name="alert" size={17} className="shrink-0" />{v.referenceNudge}</p>
+            <button type="button" disabled={busy} onClick={() => act({ action: 'filed' })} className={`${btn.primary} mt-4`}>I&apos;ve called my bank — what next?</button>
+          </>
         )}
-        <p className="eyebrow mt-5">Say exactly this</p>
-        <Letter text={v.script.join('\n')} italic />
-        <p className="mt-3 flex gap-2 text-[14px] font-semibold text-medium"><Icon name="alert" size={17} className="shrink-0" />{v.referenceNudge}</p>
-        {!called && <button type="button" disabled={busy} onClick={() => act({ action: 'filed' })} className={`${btn.secondary} mt-4`}>I have called my bank</button>}
       </Step>
 
       {called && (
@@ -190,24 +195,16 @@ function CaseScreen({ view: v, setView, onNew }: { view: CaseView; setView: (v: 
       )}
 
       {called && (
-        <Step n="03" title="Warn the next person" done={v.reportFiled}>
-          {v.reportFiled
-            ? <p className="text-ink-2">Your report is on this account now. Others checking it will see it; you are never named. <Link href="/reports" className="text-brand underline underline-offset-4">Your reports</Link></p>
-            : <Story busy={busy} onSubmit={(text) => act({ action: 'story', text })} />}
-        </Step>
-      )}
-
-      {called && (
-        <Step n="04" title="Your complaint reference" done={!!v.reference}>
+        <Step n="03" title="Your complaint reference" done={!!v.reference}>
           {v.reference
             ? <p className="text-ink-2">Reference <strong className="font-mono text-ink">{v.reference}</strong> is saved. Your complaint is on record with a date.</p>
             : <Reference busy={busy} onSubmit={(reference) => act({ action: 'reference', reference })} />}
         </Step>
       )}
 
-      {/* 'call' and 'reference' are steps 01 and 04 above; only what comes after gets its own step. */}
+      {/* 'call' and 'reference' are steps 01 and 03 above; only what comes after gets its own step. */}
       {later && (
-        <Step n="05" title={v.next.title}>
+        <Step n="04" title={v.next.title}>
           {v.next.body.map((b) => <p key={b} className="text-ink-2">{b}</p>)}
           {v.cbnLetter && (
             <>
@@ -218,24 +215,48 @@ function CaseScreen({ view: v, setView, onNew }: { view: CaseView; setView: (v: 
         </Step>
       )}
 
-      <Step n={!called ? '02' : later ? '06' : '05'} title="Report the crime">
-        <p className="text-ink-2">Alongside your bank, not instead of it. They will ask for your bank&apos;s complaint reference, so get that first.</p>
-        <ul className="mt-3 grid gap-3">
-          {v.authorities.filter((a) => a.key !== 'cbn').map((a) => (
-            <li key={a.key} className="rounded-md border border-line p-4">
-              <p className="font-semibold">{a.label}</p>
-              <p className="text-[14px] text-ink-2">{a.role}</p>
-              <Contact a={a} fallback="We haven't verified a contact for them yet. Use their official website only — never a number or link someone sends you." />
-            </li>
-          ))}
-        </ul>
-      </Step>
+      {called && (
+        <>
+          <Step n={crimeStep} title="Report the crime">
+            <p className="text-ink-2">Alongside your bank, not instead of it. They will ask for your bank&apos;s complaint reference, so get that first.</p>
+            <ul className="mt-3 grid gap-3">
+              {v.authorities.filter((a) => a.key !== 'cbn').map((a) => (
+                <li key={a.key} className="rounded-md border border-line p-4">
+                  <p className="font-semibold">{a.label}</p>
+                  <p className="text-[14px] text-ink-2">{a.role}</p>
+                  <Contact a={a} fallback="We haven't verified a contact for them yet. Use their official website only — never a number or link someone sends you." />
+                </li>
+              ))}
+            </ul>
+          </Step>
+
+          {/* Last on purpose: warning others matters, but never before getting the money frozen. */}
+          <Step n={String(Number(crimeStep) + 1).padStart(2, '0')} title="Warn the next person" done={v.reportFiled}>
+            {v.reportFiled
+              ? <p className="text-ink-2">Your report is on this account now. Others checking it will see it; you are never named. <Link href="/reports" className="text-brand underline underline-offset-4">Your reports</Link></p>
+              : <Story busy={busy} onSubmit={(text) => act({ action: 'story', text })} />}
+          </Step>
+        </>
+      )}
 
       <section className="mt-8 rounded-md border border-high/40 bg-high-wash p-5">
         <p className="eyebrow !text-high">Remember</p>
         <ul className="mt-2 grid gap-2 text-[15px]">
           {v.never.map((x) => <li key={x} className="flex gap-2"><Icon name="octagon" size={17} className="mt-0.5 shrink-0 text-high" />{x}</li>)}
         </ul>
+      </section>
+
+      <section className="card mt-8 p-5">
+        <div className="flex flex-wrap items-baseline justify-between gap-2">
+          <p className="font-mono text-[20px] font-bold tracking-wider">{v.accountNumber}</p>
+          <span className="eyebrow">{v.status}</span>
+        </div>
+        <div className="mt-3 grid gap-1">
+          <Line label="Their bank">{v.bank ?? '—'}</Line>
+          <Line label="Sent">{v.amount ? `₦${n(v.amount)}` : 'Amount not given'} · {formatDate(v.sentAt)}</Line>
+          <Line label="From">{v.victimBank ?? '—'}</Line>
+          {v.priorReporters > 0 && <Line label="Already reported by"><span className="text-high">{n(v.priorReporters)} {v.priorReporters === 1 ? 'person' : 'people'}</span></Line>}
+        </div>
       </section>
 
       {called && (

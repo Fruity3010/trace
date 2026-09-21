@@ -2,58 +2,66 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Icon, IconName } from './Icons';
+import { Brand } from './ui';
 
 type Item = { href: string; label: string; icon: IconName; match: RegExp };
 
-const MAIN: Item[] = [
+// Phone tab bar. My reports lives under Profile on phones.
+const MAIN: (Item & { tone?: 'report' })[] = [
   { href: '/', label: 'Home', icon: 'home', match: /^\/$/ },
   { href: '/check', label: 'Check', icon: 'search', match: /^\/(check|account)/ },
-  { href: '/reports', label: 'Reports', icon: 'file', match: /^\/reports?(\/|$)/ },
+  { href: '/report', label: 'Report', icon: 'alert', match: /^\/report$/, tone: 'report' },
+  { href: '/help', label: 'Get help', icon: 'phone', match: /^\/help/ },
+  { href: '/profile', label: 'Profile', icon: 'user', match: /^\/(profile|reports)/ },
+];
+
+const TOP: Item[] = [
+  { href: '/', label: 'Home', icon: 'home', match: /^\/$/ },
+  { href: '/reports', label: 'My reports', icon: 'file', match: /^\/reports(\/|$)/ },
+  { href: '/help', label: 'Get help', icon: 'phone', match: /^\/help/ },
+  { href: '/developers', label: 'For businesses', icon: 'code', match: /^\/developers/ },
   { href: '/profile', label: 'Profile', icon: 'user', match: /^\/profile/ },
 ];
 
-const BUSINESS: Item[] = [
-  { href: '/developers', label: 'TRACE API', icon: 'code', match: /^\/developers/ },
-  { href: '/intel', label: 'Intelligence', icon: 'chart', match: /^\/intel/ },
-];
-
-/** Mobile: bottom tab bar. Desktop (lg+): an index column down the left edge. */
+/** Mobile: bottom tab bar. Desktop (lg+): a top bar. */
 export function Nav() {
   const path = usePathname();
   return (
     <>
-      <aside className="fixed inset-y-0 left-0 z-30 hidden w-60 flex-col border-r border-line bg-paper px-6 py-7 lg:flex">
-        <Link href="/" className="font-mono text-[17px] font-bold tracking-[0.22em]">TRACE</Link>
-        <p className="mt-1 font-serif text-[14px] italic text-ink-3">check before you trust</p>
-        <nav aria-label="Main" className="mt-10">
-          <p className="eyebrow mb-2">Contents</p>
-          <ul className="border-t border-ink">
-            {MAIN.map((i, n) => <SideLink key={i.href} item={i} n={n + 1} active={i.match.test(path)} />)}
-          </ul>
-        </nav>
-        <nav aria-label="Business" className="mt-8">
-          <p className="eyebrow mb-2">For business</p>
-          <ul className="border-t border-ink">
-            {BUSINESS.map((i, n) => <SideLink key={i.href} item={i} n={MAIN.length + n + 1} active={i.match.test(path)} />)}
-          </ul>
-        </nav>
-        <div className="mt-auto border-t border-ink pt-4">
-          <p className="font-serif text-[18px] font-medium leading-snug">Paid someone and lost money?</p>
-          <Link href="/help" className="mt-2 inline-flex items-center gap-1 text-[14px] font-semibold text-brand underline decoration-1 underline-offset-4">
-            Get help now <Icon name="chevronRight" size={14} />
-          </Link>
+      <header className="sticky top-0 z-30 hidden border-b border-line bg-paper/95 lg:block">
+        <div className="mx-auto flex h-18 max-w-[calc(72rem+5rem)] items-center gap-8 px-10">
+          <Link href="/" aria-label="TRACE home" className="shrink-0 [&>span>span:last-child]:hidden xl:[&>span>span:last-child]:inline"><Brand /></Link>
+          <nav aria-label="Main" className="flex flex-1 items-center gap-6">
+            {TOP.map((i) => {
+              const active = i.match.test(path);
+              return (
+                <Link key={i.href} href={i.href} aria-current={active ? 'page' : undefined}
+                  className={`whitespace-nowrap text-[14px] font-medium transition ${active ? 'text-brand' : 'text-ink-2 hover:text-ink'}`}>
+                  {i.label}
+                </Link>
+              );
+            })}
+          </nav>
+          <div className="flex shrink-0 gap-2">
+            <Link href="/check" className="inline-flex h-11 items-center rounded-md bg-brand px-5 text-[14px] font-bold text-vault hover:bg-brand-ink">
+              Check an account
+            </Link>
+            <Link href="/report" className="inline-flex h-11 items-center gap-1.5 rounded-md border-2 border-high px-4 text-[14px] font-bold text-high hover:bg-high-wash">
+              <Icon name="alert" size={16} /> Report an account
+            </Link>
+          </div>
         </div>
-      </aside>
+      </header>
 
       <nav aria-label="Main" className="fixed inset-x-0 bottom-0 z-30 border-t border-ink bg-raised pb-[env(safe-area-inset-bottom)] lg:hidden">
-        <ul className="mx-auto grid max-w-xl grid-cols-4">
+        <ul className="mx-auto grid max-w-xl grid-cols-5">
           {MAIN.map((t) => {
             const active = t.match.test(path);
             return (
               <li key={t.href}>
                 <Link href={t.href} aria-current={active ? 'page' : undefined}
-                  className={`relative flex h-16 flex-col items-center justify-center gap-1 text-[11px] font-medium ${active ? 'text-ink' : 'text-ink-3'}`}>
-                  {active && <span aria-hidden className="absolute inset-x-6 top-0 h-[3px] bg-ink" />}
+                  className={`relative flex h-16 flex-col items-center justify-center gap-1 text-[11px] font-medium ${t.tone ? 'text-high' : active ? 'text-brand' : 'text-ink-3'}`}>
+                  {active && <span aria-hidden className={`absolute inset-x-4 top-0 h-[3px] rounded-b ${t.tone ? 'bg-high' : 'bg-brand'}`} />}
                   <Icon name={t.icon} size={21} strokeWidth={active ? 2.2 : 1.7} />
                   {t.label}
                 </Link>
@@ -66,15 +74,3 @@ export function Nav() {
   );
 }
 
-function SideLink({ item, n, active }: { item: Item; n: number; active: boolean }) {
-  return (
-    <li className="border-b border-line">
-      <Link href={item.href} aria-current={active ? 'page' : undefined}
-        className={`flex min-h-11 items-center gap-3 text-[15px] transition ${active ? 'font-semibold text-ink' : 'text-ink-2 hover:text-ink'}`}>
-        <span className="w-5 font-mono text-[11px] text-ink-4">{String(n).padStart(2, '0')}</span>
-        {item.label}
-        {active && <span aria-hidden className="ml-auto size-1.5 rounded-full bg-ink" />}
-      </Link>
-    </li>
-  );
-}
